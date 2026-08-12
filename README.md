@@ -16,17 +16,91 @@ Mỗi phương pháp chạy 10 seed → **60 lượt**. Báo cáo chỉ hợp l�
 
 ---
 
-## 1. Chuẩn bị dataset (bắt buộc)
+## 1. Nguồn chính thống (bắt buộc đọc trước)
 
-Cần **2 dataset Kaggle**:
+Notebook **không** đi kèm mã DRMD hay dữ liệu LAMDA. Bạn phải tự lấy từ nguồn gốc, rồi đóng gói thành 2 Kaggle Dataset theo đúng cấu trúc bên dưới.
 
-| Dataset | Link | Vai trò |
+### 1.1. Mã nguồn DRMD và phụ thuộc
+
+| Thành phần | Nguồn chính thống | Ghi chú |
 |---|---|---|
-| `thanhngo1007/drmd-lamda-dataset` | [Link](https://www.kaggle.com/datasets/thanhngo1007/drmd-lamda-dataset) | Mã nguồn DRMD + cấu hình |
-| `thanhngo1007/lamda-full-processed` | [Link](https://www.kaggle.com/datasets/thanhngo1007/lamda-full-processed) | File parquet đặc trưng (train/test theo năm) |
+| DRMD | [github.com/s2labres/DRMD](https://github.com/s2labres/DRMD) | Paper: [arXiv:2508.18839](https://arxiv.org/abs/2508.18839) |
+| Tesseract (temporal split) | [github.com/s2labres/tesseract-ml-release](https://github.com/s2labres/tesseract-ml-release) | Thư viện chia train/test theo thời gian |
+| RPAL | [github.com/s2labres/RPAL](https://github.com/s2labres/RPAL) | Phụ thuộc liên quan active learning / recovery |
 
-**Checkpoint (tùy chọn):**  
-Nếu đã có file `*_checkpoint_raw.zip` từ lần chạy trước, tạo dataset riêng chứa file đó để notebook tự khôi phục và bỏ qua các lượt đã xong.
+Cách lấy (ví dụ):
+
+```bash
+mkdir -p DRMD_LAMDA_DATASET/references
+cd DRMD_LAMDA_DATASET/references
+
+git clone https://github.com/s2labres/DRMD.git
+git clone https://github.com/s2labres/tesseract-ml-release.git
+git clone https://github.com/s2labres/RPAL.git
+```
+
+Cấu trúc tối thiểu sau khi clone:
+
+```text
+DRMD_LAMDA_DATASET/
+└── references/
+    ├── DRMD/                    # mã gốc DRMD
+    ├── tesseract-ml-release/    # thư viện temporal
+    └── RPAL/                    # phụ thuộc
+```
+
+Đóng gói thư mục `DRMD_LAMDA_DATASET` thành Kaggle Dataset (ví dụ tên `yourname/drmd-lamda-dataset`).  
+Notebook tìm project bằng cách kiểm tra sự tồn tại của `references/DRMD`.
+
+### 1.2. Dữ liệu LAMDA (đặc trưng đã xử lý)
+
+| Thành phần | Nguồn chính thống |
+|---|---|
+| LAMDA | [Hugging Face: IQSeC-Lab/LAMDA](https://huggingface.co/datasets/IQSeC-Lab/LAMDA) |
+| Paper / repo | [github.com/iqsec-lab/lamda](https://github.com/iqsec-lab/lamda) · ICLR 2026 |
+
+Notebook khóa một revision cụ thể và kiểm SHA-256 từng file parquet.  
+Revision đang dùng trong notebook: `ad9614bdd5556767f97ced2fce797c2f06408ebf` (có thể xem trong ô cấu hình).
+
+Gợi ý tải:
+
+```bash
+# Cần: pip install huggingface_hub
+huggingface-cli download IQSeC-Lab/LAMDA --repo-type dataset --revision ad9614bdd5556767f97ced2fce797c2f06408ebf --local-dir ./lamda_raw
+```
+
+Sau khi tải, tổ chức (hoặc chuyển đổi) thành cấu trúc mà notebook mong đợi:
+
+```text
+lamda-full-processed/
+└── Baseline/
+    ├── 2013/
+    │   ├── 2013_train.parquet
+    │   └── 2013_test.parquet
+    ├── 2014/
+    │   └── ...
+    └── ...
+```
+
+Mỗi file phải khớp SHA-256 trong biến `EXPECTED_LAMDA_FILE_SHA256` của notebook.  
+Nếu bạn tự xử lý từ bản gốc Hugging Face (ví dụ chọn variant Baseline), hãy chạy ô kiểm tra SHA trong notebook; nếu lệch, hoặc cập nhật dict SHA, hoặc dùng đúng bản đã khóa.
+
+Đóng gói thư mục `lamda-full-processed` (có `Baseline/`) thành Kaggle Dataset thứ hai.
+
+### 1.3. Dataset tham khảo (đã đóng gói sẵn)
+
+Nếu muốn bỏ qua bước tự đóng gói, có thể dùng bản đã chuẩn bị sẵn (cùng cấu trúc và SHA đã khóa):
+
+| Dataset Kaggle | Vai trò |
+|---|---|
+| [thanhngo1007/drmd-lamda-dataset](https://www.kaggle.com/datasets/thanhngo1007/drmd-lamda-dataset) | Tham khảo: mã nguồn + `references/DRMD` |
+| [thanhngo1007/lamda-full-processed](https://www.kaggle.com/datasets/thanhngo1007/lamda-full-processed) | Tham khảo: parquet Baseline theo năm |
+
+Đây chỉ là **bản tiện lợi**. Nguồn chính thống vẫn là GitHub s2labres và Hugging Face IQSeC-Lab như trên. Khi tái tạo thí nghiệm hoặc xuất bản, nên ghi rõ bạn đã lấy từ nguồn gốc.
+
+### 1.4. Checkpoint (tùy chọn)
+
+Nếu đã có `*_checkpoint_raw.zip` từ phiên trước, tạo thêm một Kaggle Dataset chứa file zip đó. Notebook sẽ khôi phục và bỏ qua các lượt đã hoàn tất.
 
 ---
 
@@ -37,9 +111,9 @@ Nếu đã có file `*_checkpoint_raw.zip` từ lần chạy trước, tạo dat
    - Accelerator → **GPU** (bắt buộc)
    - Internet → On (lần đầu) hoặc Off nếu đã gắn đủ dataset
 3. **Add Input**:
-   - `thanhngo1007/drmd-lamda-dataset`
-   - `thanhngo1007/lamda-full-processed`
-   - (Tùy chọn) dataset chứa checkpoint zip
+   - Dataset mã nguồn (cấu trúc có `references/DRMD`) — của bạn hoặc bản tham khảo
+   - Dataset parquet LAMDA (có thư mục `Baseline/`)
+   - (Tùy chọn) dataset checkpoint
 4. Chạy **Run All** hoặc chạy từng ô theo thứ tự.
 5. Kết quả nằm ở `/kaggle/working/results/...`:
    - `tables/` — bảng tổng hợp, so sánh ghép cặp
@@ -60,15 +134,16 @@ Thời gian tham khảo: khoảng 4–6 phút / lượt DRMD trên GPU Kaggle.
    - Tên: `KAGGLE_API_TOKEN`
    - Giá trị: token API Kaggle của bạn (không dán token vào code)
 4. (Tùy chọn) Mount Google Drive nếu muốn sao lưu checkpoint tự động.
-5. Chạy **Ô 1**. Notebook sẽ:
+5. Trong Ô 1, nếu dùng dataset tự đóng gói, sửa handle cho đúng `owner/slug` của bạn; mặc định notebook trỏ tới bản tham khảo.
+6. Chạy **Ô 1**. Notebook sẽ:
    - Cài `kagglehub` nếu thiếu
-   - Tải 2 dataset bắt buộc vào `/content/drmd_colab/input`
+   - Tải dataset vào `/content/drmd_colab/input`
    - Dùng `/content/drmd_colab/working` làm thư mục ghi
-6. Chạy tiếp các ô còn lại theo thứ tự.
+7. Chạy tiếp các ô còn lại theo thứ tự.
 
 **Checkpoint tùy chọn trên Colab:**
 - Đặt trong Ô 1: `COLAB_CHECKPOINT_DATASET = "owner/slug"`
-- Hoặc tạo secret `KAGGLE_CHECKPOINT_DATASET` với giá trị tương tự
+- Hoặc tạo secret `KAGGLE_CHECKPOINT_DATASET`
 
 Nếu đã mount Drive, checkpoint được copy vào:
 `/content/drive/MyDrive/DRMD_checkpoints/`
@@ -108,6 +183,7 @@ Nếu đã mount Drive, checkpoint được copy vào:
 | Số mẫu test | 885.947 |
 | Seed | `[0, 1, 7, 13, 26, 42, 73, 2026, 314159, 281083886]` |
 | Cửa sổ thời gian | 12 tháng (`calendar_12`) |
+| Revision LAMDA | `ad9614bdd5556767f97ced2fce797c2f06408ebf` |
 
 Ba chỉnh sửa quan trọng của bản V14 (so với FN cũ):
 
@@ -150,14 +226,22 @@ Sau Ô 10, xem các file trong thư mục results:
 ## 8. Lưu ý quan trọng
 
 - GPU bắt buộc khi huấn luyện (`REQUIRE_CUDA = True`).
-- Không sửa `EXPECTED_LAMDA_FILE_SHA256` trừ khi cố ý đổi bộ dữ liệu.
-- Notebook tự nhúng mã BHR và các vá runtime, không cần package `experiments` riêng.
-- Trên Kaggle Dataset `drmd-lamda-dataset`, cấu trúc thư mục gốc cần có `references/DRMD` để notebook tìm project.
+- Không sửa `EXPECTED_LAMDA_FILE_SHA256` trừ khi cố ý đổi bộ dữ liệu / revision.
+- Notebook tự nhúng mã BHR và các vá runtime; không cần package `experiments` có sẵn trên Dataset.
+- Khi công bố kết quả, trích dẫn đúng paper DRMD và paper LAMDA; dataset Kaggle đóng gói sẵn chỉ là tiện ích tái hiện.
 
 ---
 
-## Liên kết
+## Liên kết nguồn chính thống
 
-- LAMDA gốc: [Hugging Face](https://huggingface.co/datasets/IQSeC-Lab/LAMDA)
-- Dataset mã nguồn: [thanhngo1007/drmd-lamda-dataset](https://www.kaggle.com/datasets/thanhngo1007/drmd-lamda-dataset)
-- Dataset parquet: [thanhngo1007/lamda-full-processed](https://www.kaggle.com/datasets/thanhngo1007/lamda-full-processed)
+- DRMD (code): [github.com/s2labres/DRMD](https://github.com/s2labres/DRMD)
+- DRMD (paper): [arXiv:2508.18839](https://arxiv.org/abs/2508.18839)
+- Tesseract: [github.com/s2labres/tesseract-ml-release](https://github.com/s2labres/tesseract-ml-release)
+- RPAL: [github.com/s2labres/RPAL](https://github.com/s2labres/RPAL)
+- LAMDA (dataset): [Hugging Face IQSeC-Lab/LAMDA](https://huggingface.co/datasets/IQSeC-Lab/LAMDA)
+- LAMDA (repo): [github.com/iqsec-lab/lamda](https://github.com/iqsec-lab/lamda)
+
+## Dataset tham khảo (đã đóng gói)
+
+- [thanhngo1007/drmd-lamda-dataset](https://www.kaggle.com/datasets/thanhngo1007/drmd-lamda-dataset)
+- [thanhngo1007/lamda-full-processed](https://www.kaggle.com/datasets/thanhngo1007/lamda-full-processed)
