@@ -1,6 +1,6 @@
 # DRMD trên LAMDA — Hướng dẫn chạy
 
-Notebook huấn luyện thống nhất cho 5 phương pháp trên bộ dữ liệu LAMDA.  
+Notebook huấn luyện thống nhất cho 6 phương pháp trên bộ dữ liệu LAMDA.  
 Chạy được trên **Kaggle** và **Google Colab**.
 
 | Phương pháp | Mô tả |
@@ -10,8 +10,9 @@ Chạy được trên **Kaggle** và **Google Colab**.
 | DRMD-IRAAL | Cập nhật theo ngân sách B = 15 |
 | DRMD-FN | IRAAL + phạt false-negative thích nghi |
 | DRMD-FN-BHR | DRMD-FN + Balanced Hard Replay |
+| DRMD-FFCR | Full-feedback reference (mọi mẫu đều có nhãn) |
 
-Mỗi phương pháp chạy 10 seed → **50 lượt**. Báo cáo chỉ hợp lệ khi đủ 50/50.
+Mỗi phương pháp chạy 10 seed → **60 lượt**. Báo cáo chỉ hợp lệ khi đủ 60/60.
 
 ---
 
@@ -44,10 +45,10 @@ Nếu đã có file `*_checkpoint_raw.zip` từ lần chạy trước, tạo dat
    - `tables/` — bảng tổng hợp, so sánh ghép cặp
    - `figures/` — hình (khi đủ dữ liệu)
    - `*_checkpoint_raw.zip` — checkpoint để dùng phiên sau
-   - `*_full_test_report_bundle.zip` — gói báo cáo khi đủ 50/50
+   - `*_full_test_report_bundle.zip` — gói báo cáo khi đủ 60/60
 
 Thời gian tham khảo: khoảng 4–6 phút / lượt DRMD trên GPU Kaggle.  
-50 lượt thường cần nhiều phiên. Notebook tự dừng theo `SESSION_LAUNCH_CUTOFF_HOURS` (mặc định 10,5 giờ) và xuất checkpoint.
+60 lượt thường cần nhiều phiên. Notebook tự dừng theo `SESSION_LAUNCH_CUTOFF_HOURS` (mặc định 10,5 giờ) và xuất checkpoint.
 
 ---
 
@@ -86,7 +87,7 @@ Nếu đã mount Drive, checkpoint được copy vào:
 | 6 | Cài dependency + vá runtime DRMD |
 | 7 | Nạp LAMDA, kiểm SHA-256 và split |
 | 8 | Huấn luyện Static-MLP (10 seed) |
-| 9 | Huấn luyện IRAL, IRAAL, FN, FN-BHR (40 lượt) |
+| 9 | Huấn luyện IRAL, IRAAL, FN, FN-BHR, FFCR (50 lượt) |
 | 10 | Tổng hợp monthly, summary, so sánh ghép cặp |
 | 11 | Kiểm tra điều kiện đọc kết quả |
 | 12 | Đóng gói zip bảng / checkpoint |
@@ -140,9 +141,9 @@ Sau Ô 10, xem các file trong thư mục results:
 |---|---|
 | `unified_integrity_summary.json` | `report_ready`, số lượt hợp lệ, lỗi |
 | `unified_all_methods_overview.csv` | Trung bình ± sd theo phương pháp |
-| `unified_paired_effects_summary.csv` | Hiệu ghép cặp (FN − IRAAL, FN-BHR − FN, …) |
+| `unified_paired_effects_summary.csv` | Hiệu ghép cặp (FN − IRAAL, FN-BHR − FN, FFCR − …) |
 
-**Chỉ diễn giải khi `report_ready = true`** (đủ 50/50).
+**Chỉ diễn giải khi `report_ready = true`** (đủ 60/60).
 
 ---
 
